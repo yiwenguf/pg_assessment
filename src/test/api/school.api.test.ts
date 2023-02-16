@@ -15,7 +15,7 @@ describe('Registering a new student', () => {
         .post("/api/register")
         .send(payload)
 
-        // expect(response.statusCode).toEqual(204); // teacher and student is composite key, will fail if record already exist
+        // expect(response.statusCode).toEqual(204); // teacher and student is a composite key, will fail if record already exist
     }),
     it('Post request with no teacher param in payload', async() => {
         const payload = {
@@ -81,8 +81,7 @@ describe('Retrieving list of students', () => {
         .get("/api/commonstudents")
         .send();
 
-        expect(response.statusCode).toEqual(200);
-        expect(response.body).toEqual({ students: [] })
+        expect(response.statusCode).toEqual(400);
     })
 });
 
@@ -117,5 +116,32 @@ describe('Retrieve for notification', () => {
         .send(payload)
 
         expect(response.statusCode).toEqual(200);
+    }),
+    it('Post request without teacher param in payload', async() => {
+        const payload = {
+            "notification": "Hello students! @studentagnes@gmail.com @studentmiche@gmail.com"
+        }
+        const response = await request(app)
+        .post("/api/retrievefornotifications")
+        .send(payload)
+
+        expect(response.statusCode).toEqual(400);
+    });
+    it('Post request without notification param in payload', async() => {
+        const payload = {
+            "teacher":  "teacherken@gmail.com",
+        }
+        const response = await request(app)
+        .post("/api/retrievefornotifications")
+        .send(payload)
+
+        expect(response.statusCode).toEqual(400);
+    });
+    it('Post request with no payload', async() => {
+        const response = await request(app)
+        .post("/api/retrievefornotifications")
+        .send()
+
+        expect(response.statusCode).toEqual(400);
     });
 });

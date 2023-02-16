@@ -1,11 +1,11 @@
 import { Request, Response } from "express";
-import { getNonSuspendedStudents, getStudentByName, getStudents, postNewStudent, postSuspendStudent } from "../services/db";
+import { getNonSuspendedStudents, getStudentByName, getStudents, postStudents, updateSuspendStudent } from "../services/db";
 
-export async function registerStudent(req: Request, res: Response){
+export async function registerStudent(req: any, res: any){
     try{
         if (req.body && req.body.teacher && req.body.students){
-            await postNewStudent(req.body);
-            res.status(204).send();
+            await postStudents(req.body.teacher, req.body.students);
+            res.status(204).send('Success');
         }
         else{
             res.status(400).send('Invalid content in the request body');
@@ -17,66 +17,92 @@ export async function registerStudent(req: Request, res: Response){
     }
 }
 
-export async function retrieveStudents(req: Request, res: Response){
+export async function retrieveStudents(req: any, res: any){
     try{
         const result: string[] = [];
-        let query = req.query.teacher;
+        if (req.query && req.query.teacher){
+            let query = req.query.teacher;
 
-        if (Array.isArray(query)){
-            for (let q of query){
-                const students = await getStudents(String(q));
+            if (Array.isArray(query)){
+                for (let q of query){
+                    const students = await getStudents(String(q));
+                    students.forEach((student) => {
+                        result.push(String(student.get("student_name")));
+                    })
+                }
+            }
+            else{
+                const students = await getStudents(String(query));
                 students.forEach((student) => {
                     result.push(String(student.get("student_name")));
                 })
             }
+    
+            res.status(200).send({students: result});
         }
         else{
-            const students = await getStudents(String(query));
-            students.forEach((student) => {
-                result.push(String(student.get("student_name")));
-            })
+            res.status(400).send("Missing queries");
         }
-
-        res.status(200).send({students: result});
     }
     catch(err){
         res.status(400).send(err);
     }
 }
 
-export async function suspendStudent(req: Request, res: Response){
-    if (req.body && req.body.student){
-        await postSuspendStudent(req.body.student)
-        .then(() => res.status(204).send())
-        .catch((err) => res.status(400).send(err));
+export async function suspendStudent(req: any, res: any){
+    try{
+        if (req.body && req.body.student){
+            await updateSuspendStudent(req.body.student);
+            res.status(204).send();
+        }
+        else{
+            res.status(400).send('Invalid content in the request body');
+        }
     }
-    else{
-        res.status(400).send('Invalid content in the request body');
+    catch(err){
+        res.status(400).send(err);
     }
 }
 
-export async function retrieveStudentsForNotification(req: Request, res: Response){
-    if (req.body && req.body.teacher && req.body.notification){
-        const taggedStudents: string[] = req.body.notification.split(' @');
-        const result: string[] = [];
-    
-        taggedStudents.shift(); //Remove the message, assuming tags always comes after the message
-    
-        await getNonSuspendedStudents(req.body.teacher).then((students) => {
-            students.forEach(student => {
-                result.push(String(student.get("student_name")));
-            })
-        });
-    
-        for (let tag of taggedStudents){
-            const student = await getStudentByName(tag);
-            if (student)
-                result.push(String(student.get("student_name")));
-        };
-    
-        res.status(200).send({recipients: result});
-    }
+export async function retrieveStudentsForNotification(req: any, res: any){
+    try{
+        if (req.body && req.body.teacher && req.body.notification){
+            const strings: string[] = req.body.notification.split('@');
+            const taggedStudents: string[] = [];
+            const result: string[] = [];
 
+            strings.forEach((s => {
+                if (String(s).includes(".com")){
+                    if (!String(s).trim().endsWith('.com')){
+                        taggedStudents.push(strings[strings.indexOf(s)-1].concat('@').concat(s.split('.com')[0].concat('.com')));
+                    }
+                    else{
+                        taggedStudents.push(strings[strings.indexOf(s)-1].concat('@').concat(strings[strings.indexOf(s)]).trim());
+                    }
+                }
+            }))
+
+            await getNonSuspendedStudents(req.body.teacher).then((students) => {
+                students.forEach(student => {
+                    result.push(String(student.get("student_name")));
+                })
+            });
+        
+            for (let tag of taggedStudents){
+                const student = await getStudentByName(tag);
+                if (student)
+                    result.push(String(student.get("student_name")));
+            };
+        
+            res.status(200).send({recipients: result});
+        }
+        else{
+            res.status(400).send('Invalid content in the request body');
+        }
+    }
+    catch(err){
+        res.status(400).send(err);
+    }
     
 }
 

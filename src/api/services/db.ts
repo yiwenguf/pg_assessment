@@ -1,6 +1,6 @@
 import { Sequelize, Model, DataTypes } from 'sequelize';
 
-const sequelize = new Sequelize('pg_db', 'root', 'password', {
+const sequelize = new Sequelize('pg_db', 'root', 'root', {
     host: '0.0.0.0',
     dialect: 'mysql'
 });
@@ -23,20 +23,23 @@ let teacherStudentTable = sequelize.define('teacher_students', {
     }
 })
 
-sequelize.authenticate().then(() => {
-    console.log('Connection has been established successfully.');
-}).catch((error) => {
-    console.error('Unable to connect to the database: ', error);
-});
+export function initDb(){
+    sequelize.authenticate().then(() => {
+        console.log('Connection has been established successfully.');
+    }).catch((error) => {
+        console.error('Unable to connect to the database: ', error);
+    });
+    
+    teacherStudentTable.sync();
+}
 
-teacherStudentTable.sync();
 
-export async function postNewStudent(content: {teacher: string, students: string[]}){
+export async function postStudents(teacher: string, students: string[]){
     const transaction = await sequelize.transaction();
     try{
-        for (let student of content.students){
+        for (let student of students){
             await teacherStudentTable.create({
-                teacher_name: content.teacher,
+                teacher_name: teacher,
                 student_name: student
             }, {transaction});
         }
@@ -83,9 +86,15 @@ export function getStudentByName(studentName: string){
     }
 }
 
-export function postSuspendStudent(studentName: string){
-    return teacherStudentTable.update(
-        {is_suspended: true},
-        {where: {student_name: studentName}}
-    );
+export function updateSuspendStudent(studentName: string){
+    try{
+        return teacherStudentTable.update(
+            {is_suspended: true},
+            {where: {student_name: studentName}}
+        );
+    }
+    catch(err){
+        throw(err);
+    }
+    
 }
