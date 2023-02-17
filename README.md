@@ -11,7 +11,7 @@ Commands
 
 To run unit tests
 - Open terminal/cmd in the project folder
-- npm test
+- npx tsc; npm test
 
 To start the backend
 - Open terminal/cmd in the project folder
