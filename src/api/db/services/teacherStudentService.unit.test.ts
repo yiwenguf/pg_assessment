@@ -93,7 +93,7 @@ describe('Find common student', () => {
         });
 
         const response = await findCommonStudent(["teacherken@gmail.com","teacherbob@gmail.com"]);
-        expect(response).toEqual(['studentjon@gmail.com', 'studentjane@gmail.com']);
+        expect(response).toEqual({students: ['studentjon@gmail.com', 'studentjane@gmail.com']});
 
     });
     it('Using one string as input and returning 2 students', async() => {
@@ -131,7 +131,7 @@ describe('Find common student', () => {
         });
 
         const response = await findCommonStudent("teacherken@gmail.com");
-        expect(response).toEqual(['studentjon@gmail.com', 'studentjane@gmail.com']);
+        expect(response).toEqual({students: ['studentjon@gmail.com', 'studentjane@gmail.com']});
 
     });
 });

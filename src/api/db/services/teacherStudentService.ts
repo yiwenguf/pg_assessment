@@ -16,9 +16,9 @@ export const register = async (teacher: string, students: string[]): Promise<any
     }
 }
 
-export const findCommonStudent = async (name: string | string[]): Promise<string[]> => {
+export const findCommonStudent = async (name: string | string[]): Promise<{students: string[]}> => {
     const idList: number[] = []
-    const result: string[] = [];
+    const result: {students: string[]} = {students: []};
 
     if (Array.isArray(name)){
         for (let n of name){
@@ -27,7 +27,7 @@ export const findCommonStudent = async (name: string | string[]): Promise<string
                 idList.push(Number(teacher.get('id')));
             }
             else{
-                return []; // Return empty as a non-existant teacher is selected in query
+                return {students: []}; // Return empty as a non-existant teacher is selected in query
             }
         }
     }
@@ -40,7 +40,7 @@ export const findCommonStudent = async (name: string | string[]): Promise<string
 
     const students = await teacherStudentDal.findCommonStudent(idList);
     students.forEach((student) => {
-        result.push(student.getDataValue('student').getDataValue('name'));
+        result.students.push(student.getDataValue('student').getDataValue('name'));
     })
 
     return result;
